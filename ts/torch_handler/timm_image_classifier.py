@@ -1,14 +1,19 @@
 """
 Module for image classification default handler
 """
+import logging
 import torch
 import torch.nn.functional as F
 from torchvision import transforms
+import os
+import json
 
 from ts.torch_handler.vision_handler import VisionHandler
 from ts.utils.util  import map_class_to_label
 
 from timm.models import create_model
+
+logger = logging.getLogger(__name__)
 
 class TimmImageClassifier(VisionHandler):
     """
@@ -28,7 +33,9 @@ class TimmImageClassifier(VisionHandler):
     ])
 
     def initialize(self, context):
+        properties = context.system_properties
         self.manifest = context.manifest
+        model_name = 'hf_hub:timm/eva02_large_patch14_clip_336.merged2b_ft_inat21'
 
         model_dir = properties.get("model_dir")
         self.model_pt_path = None
@@ -40,7 +47,7 @@ class TimmImageClassifier(VisionHandler):
         with open(model_json_path,'r') as rf: 
             model_dict = json.load(rf)
         self.model = create_model(
-            checkpoint_path=self.model_pt_path, **model_dict)  # from timm.models import create_model
+            model_name=model_name, checkpoint_path=self.model_pt_path, **model_dict)  # from timm.models import create_model
         self.model.to(self.device)
         self.model.eval()
 
